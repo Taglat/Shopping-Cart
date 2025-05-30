@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 
 import { Product } from "@/types";
 import { productsApi, apiUtils } from "@/services/api";
-import ProductItem from "@/components/product-item";
+import withSkeleton from "@/components/hoc/with-skeleton";
+import ProductList from "@/components/product-list";
+
+const ProductListWithSkeleton = withSkeleton(ProductList, {
+  skeletonCount: 12,
+});
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -13,7 +18,7 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await productsApi.getProducts({ limit: 10, skip: 0 });
+        const data = await productsApi.getProducts({ limit: 12, skip: 0 });
         setProducts(data.products);
       } catch (err) {
         setError(apiUtils.handleApiError(err));
@@ -25,23 +30,23 @@ export default function Home() {
     fetchProducts();
   }, []);
 
-  if (loading) return <div>Загрузка...</div>;
-  if (error) return <div>Ошибка: {error}</div>;
-
+  if (error) { 
+    console.log("ERROR ",error)
+    return <div>Ошибка: {error}</div>;
+  }
   console.log(products)
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Продукты</h1>
-      <ul className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <ProductItem
-            product={product}
-            key={product.id}
-            onAddToCart={() => {}}
-          />
-        ))}
-      </ul>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Каталог товаров</h1>
+      
+      <ProductListWithSkeleton
+        products={products}
+        isLoading={loading}
+        onAddToCart={(product) => console.log("Add to cart:", product.id)}
+        onQuickView={(product) => console.log("Quick view:", product.id)}
+        onToggleFavorite={(productId) => console.log("Toggle favorite:", productId)}
+      />
     </div>
   );
 }
