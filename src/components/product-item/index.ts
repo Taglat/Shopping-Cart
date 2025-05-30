@@ -1,2 +1,2 @@
-import ProductItem from "./product-item-layout";
+import ProductItem from "./product-item";
 export default ProductItem;
