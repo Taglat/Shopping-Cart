@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-
-import { Product } from "@/types";
+import { Product, ProductsResponseSchema } from "@/types";
 import { productsApi, apiUtils } from "@/services/api";
 import withSkeleton from "@/components/hoc/with-skeleton";
 import ProductList from "@/components/product-list";
+import Pagination from "@/components/pagination";
 
 const ProductListWithSkeleton = withSkeleton(ProductList, {
   skeletonCount: 12,
@@ -14,38 +14,86 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const skip = (currentPage - 1) * pageSize;
+      console.log("Fetching products:", { limit: pageSize, skip });
+
+      const data = await productsApi.getProducts({
+        limit: pageSize,
+        skip: skip,
+      });
+
+console.log("Raw API response:", data); // <= сюда
+const validatedData = ProductsResponseSchema.parse(data); // Может падать тут
+      console.log("Fetched data:", data);
+
+      setProducts(data.products);
+      setTotal(data.total ?? 0);
+    } catch (err) {
+      const errorMessage = apiUtils.handleApiError(err);
+      console.error("API Error:", errorMessage, err);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const data = await productsApi.getProducts({ limit: 12, skip: 0 });
-        setProducts(data.products);
-      } catch (err) {
-        setError(apiUtils.handleApiError(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
-  }, []);
+  }, [currentPage]);
 
-  if (error) { 
-    console.log("ERROR ",error)
+  if (error) {
+    console.log("ERROR ", error);
     return <div>Ошибка: {error}</div>;
   }
-  console.log(products)
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handlePageClick = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  console.log(products);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Каталог товаров</h1>
-      
+    <div>
+      <h1>Каталог товаров</h1>
+
       <ProductListWithSkeleton
-        products={products}
         isLoading={loading}
+        products={products}
         onAddToCart={(product) => console.log("Add to cart:", product.id)}
         onQuickView={(product) => console.log("Quick view:", product.id)}
-        onToggleFavorite={(productId) => console.log("Toggle favorite:", productId)}
+        onToggleFavorite={(productId) =>
+          console.log("Toggle favorite:", productId)
+        }
+      />
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        handleNextPage={handleNextPage}
+        handlePreviousPage={handlePreviousPage}
+        handlePageClick={handlePageClick}
       />
     </div>
   );
