@@ -10,7 +10,7 @@ export const ProductSchema = z.object({
   discountPercentage: z.number(),
   rating: z.number(),
   stock: z.number(),
-  brand: z.string(),
+  brand: z.string().optional(),
   images: z.array(z.string()),
   thumbnail: z.string(),
 });
