@@ -67,7 +67,7 @@ const ProductItem: React.FC<ProductItemProps> = ({
       {/* Product Info */}
       <div className="p-4">
         {/* Brand */}
-        <p className="text-sm text-gray-500 mb-1">{product.brand || "No Brand"}</p>
+        {product.brand && <p className="text-sm text-gray-500 mb-1">{product.brand}</p>}
 
         {/* Title */}
         <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2 h-10">

@@ -29,11 +29,7 @@ export default function Home() {
         limit: pageSize,
         skip: skip,
       });
-
-console.log("Raw API response:", data); // <= сюда
-const validatedData = ProductsResponseSchema.parse(data); // Может падать тут
-      console.log("Fetched data:", data);
-
+      
       setProducts(data.products);
       setTotal(data.total ?? 0);
     } catch (err) {
