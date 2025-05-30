@@ -6,6 +6,7 @@ import withSkeleton from "@/components/hoc/with-skeleton";
 import ProductList from "@/components/product-list";
 import Pagination from "@/components/pagination";
 import CategoryFilter from "@/components/filter/category-filter";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const ProductListWithSkeleton = withSkeleton(ProductList, {
   skeletonCount: 12,
@@ -105,8 +106,8 @@ export default function Home() {
 
   return (
     <div>
-      <h1>Каталог товаров</h1>
-
+      <ThemeToggle />
+      
       <CategoryFilter
         categories={categories}
         selectedCategory={selectedCategory}
