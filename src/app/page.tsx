@@ -106,13 +106,14 @@ export default function Home() {
 
   return (
     <div>
-      <ThemeToggle />
+      <ThemeToggle className="mb-2 mt-2" />
       
       <CategoryFilter
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
         productsApi={productsApi}
+        className="mb-2"
       />
 
       <ProductListWithSkeleton
@@ -123,6 +124,7 @@ export default function Home() {
         onToggleFavorite={(productId) =>
           console.log("Toggle favorite:", productId)
         }
+        className="mb-2"
       />
 
       <Pagination

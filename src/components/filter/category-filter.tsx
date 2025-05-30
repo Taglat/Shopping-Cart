@@ -1,3 +1,4 @@
+import { cn } from "@/utils/cn";
 import { useEffect, useState } from "react";
 
 interface CategoryFilterProps {
@@ -5,6 +6,7 @@ interface CategoryFilterProps {
   selectedCategory: string | null;
   onCategoryChange: (category: string | null) => void;
   productsApi: any;
+  className?: string;
 }
 
 interface CategoryWithCount {
@@ -19,6 +21,7 @@ export default function CategoryFilter({
   selectedCategory,
   onCategoryChange,
   productsApi,
+  className
 }: CategoryFilterProps) {
   const [categoriesWithCounts, setCategoriesWithCounts] = useState<CategoryWithCount[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -68,8 +71,7 @@ export default function CategoryFilter({
 
   if (loading) {
     return (
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">Категории</h3>
+      <div className={className}>
         <div className="flex flex-wrap gap-2">
           {skeletonWidths.map((width, index) => (
             <div
@@ -89,7 +91,7 @@ export default function CategoryFilter({
   );
 
   return (
-    <div className="mb-6">
+    <div className={cn(className, "py-2")}>
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => onCategoryChange(null)}
