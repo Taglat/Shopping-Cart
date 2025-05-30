@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Product, ProductsResponseSchema } from "@/types";
+import { Product } from "@/types";
 import { productsApi, apiUtils } from "@/services/api";
 import withSkeleton from "@/components/hoc/with-skeleton";
 import ProductList from "@/components/product-list";
 import Pagination from "@/components/pagination";
+import CategoryFilter from "@/components/filter/category-filter";
 
 const ProductListWithSkeleton = withSkeleton(ProductList, {
   skeletonCount: 12,
@@ -15,21 +16,30 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
-
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const skip = (currentPage - 1) * pageSize;
-      console.log("Fetching products:", { limit: pageSize, skip });
 
-      const data = await productsApi.getProducts({
-        limit: pageSize,
-        skip: skip,
-      });
-      
+      let data;
+      if (selectedCategory) {
+        data = await productsApi.getProductsByCategory(selectedCategory, {
+          limit: pageSize,
+          skip,
+        });
+      } else {
+        data = await productsApi.getProducts({
+          limit: pageSize,
+          skip,
+        });
+      }
+
+      console.log("Products fetched:", data.products);
       setProducts(data.products);
       setTotal(data.total ?? 0);
     } catch (err) {
@@ -41,12 +51,32 @@ export default function Home() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const data = await productsApi.getCategories();
+      console.log("Categories fetched:", data);
+      if (!Array.isArray(data)) {
+        console.error("Categories data is not an array:", data);
+        return;
+      }
+      const categoryNames = Array.from(
+        new Set(data.map((item: any) => item.name || item.slug || item))
+      ).filter((name): name is string => typeof name === "string");
+      setCategories(categoryNames);
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     fetchProducts();
-  }, [currentPage]);
+  }, [currentPage, selectedCategory]);
 
   if (error) {
-    console.log("ERROR ", error);
     return <div>Ошибка: {error}</div>;
   }
 
@@ -68,11 +98,21 @@ export default function Home() {
     setCurrentPage(pageNumber);
   };
 
-  console.log(products);
+  const handleCategoryChange = (category: string | null) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
 
   return (
     <div>
       <h1>Каталог товаров</h1>
+
+      <CategoryFilter
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={handleCategoryChange}
+        productsApi={productsApi}
+      />
 
       <ProductListWithSkeleton
         isLoading={loading}

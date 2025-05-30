@@ -92,7 +92,9 @@ export const productsApi = {
     if (params.order) searchParams.append("order", params.order);
 
     const query = searchParams.toString();
-    const endpoint = `/products/category/${category}?${query}`;
+    const endpoint = `/products/category/${encodeURIComponent(
+      category
+    )}?${query}`;
 
     const data = await fetchApi<unknown>(endpoint);
     const validatedData = ProductsResponseSchema.parse(data);
