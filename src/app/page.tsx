@@ -1,139 +1,156 @@
-"use client";
-import { useEffect, useState } from "react";
-import { Product } from "@/types";
-import { productsApi, apiUtils } from "@/services/api";
-import withSkeleton from "@/components/hoc/with-skeleton";
-import ProductList from "@/components/product-list";
-import Pagination from "@/components/pagination";
+import { Suspense } from "react";
+import { productsApi } from "@/services/api";
+import ProductsSection from "@/components/products-section";
 import CategoryFilter from "@/components/filter/category-filter";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
-const ProductListWithSkeleton = withSkeleton(ProductList, {
-  skeletonCount: 12,
-});
+interface Category {
+  slug: string;
+  name: string;
+  url: string;
+}
 
-export default function Home() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
-  const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const skip = (currentPage - 1) * pageSize;
-
-      let data;
-      if (selectedCategory) {
-        data = await productsApi.getProductsByCategory(selectedCategory, {
-          limit: pageSize,
-          skip,
-        });
-      } else {
-        data = await productsApi.getProducts({
-          limit: pageSize,
-          skip,
-        });
-      }
-
-      console.log("Products fetched:", data.products);
-      setProducts(data.products);
-      setTotal(data.total ?? 0);
-    } catch (err) {
-      const errorMessage = apiUtils.handleApiError(err);
-      console.error("API Error:", errorMessage, err);
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+interface HomePageProps {
+  searchParams: {
+    page?: string;
+    category?: string;
+    limit?: string;
   };
+}
 
-  const fetchCategories = async () => {
-    try {
-      const data = await productsApi.getCategories();
-      console.log("Categories fetched:", data);
-      if (!Array.isArray(data)) {
-        console.error("Categories data is not an array:", data);
-        return;
-      }
-      const categoryNames = Array.from(
-        new Set(data.map((item: any) => item.name || item.slug || item))
-      ).filter((name): name is string => typeof name === "string");
-      setCategories(categoryNames);
-    } catch (err) {
-      console.error("Failed to fetch categories:", err);
+async function getProducts(
+  page: number,
+  category?: string,
+  limit: number = 12
+) {
+  const skip = (page - 1) * limit;
+
+  try {
+    if (category) {
+      return await productsApi.getProductsByCategory(category, { limit, skip });
     }
-  };
+    return await productsApi.getProducts({ limit, skip });
+  } catch (error) {
+    console.error("Failed to fetch products:", error);
+    return { products: [], total: 0 };
+  }
+}
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+async function getCategories(): Promise<Category[]> {
+  try {
+    const rawCategories = await productsApi.getCategories();
+    
+    // Адаптер для преобразования данных в нужный формат
+    if (Array.isArray(rawCategories)) {
+      return rawCategories.map((item: any) => {
+        // Если это уже объект с нужными полями
+        if (typeof item === 'object' && item.slug && item.name) {
+          return item as Category;
+        }
+        
+        // Если это строка, преобразуем в объект
+        if (typeof item === 'string') {
+          return {
+            slug: item.toLowerCase().replace(/\s+/g, '-'),
+            name: item.charAt(0).toUpperCase() + item.slice(1).replace(/-/g, ' '),
+            url: `https://dummyjson.com/products/category/${item}`
+          };
+        }
+        
+        // Если это объект, но с другой структурой
+        return {
+          slug: item.slug || item.name?.toLowerCase().replace(/\s+/g, '-') || String(item),
+          name: item.name || String(item).replace(/-/g, ' '),
+          url: item.url || `https://dummyjson.com/products/category/${item.slug || item.name || item}`
+        };
+      });
+    }
+    
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch categories:", error);
+    return [];
+  }
+}
 
-  useEffect(() => {
-    fetchProducts();
-  }, [currentPage, selectedCategory]);
+// Функция для получения количества продуктов по категориям
+async function getCategoryCounts(categories: Category[]) {
+  const counts: Record<string, number> = {};
 
-  if (error) {
-    return <div>Ошибка: {error}</div>;
+  try {
+    // Получаем количество продуктов для каждой категории параллельно
+    const countPromises = categories.map(async (category) => {
+      try {
+        const response = await productsApi.getProductsByCategory(
+          category.slug,
+          { limit: 1, skip: 0 }
+        );
+        return { slug: category.slug, count: response.total || 0 };
+      } catch (error) {
+        console.error(
+          `Failed to fetch count for category ${category.slug}:`,
+          error
+        );
+        return { slug: category.slug, count: 0 };
+      }
+    });
+
+    const results = await Promise.all(countPromises);
+
+    results.forEach(({ slug, count }) => {
+      counts[slug] = count;
+    });
+  } catch (error) {
+    console.error("Failed to fetch category counts:", error);
   }
 
-  const totalPages = Math.ceil(total / pageSize);
+  return counts;
+}
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const params = await searchParams;
+  const currentPage = parseInt(params.page || "1");
+  const selectedCategory = params.category || null;
+  const pageSize = parseInt(params.limit || "12");
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  // Параллельные запросы
+  const [productsData, categories] = await Promise.all([
+    getProducts(currentPage, selectedCategory || undefined, pageSize),
+    getCategories(), // Теперь возвращает Category[]
+  ]);
 
-  const handlePageClick = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
+  // Получаем счетчики категорий
+  const categoryCounts = await getCategoryCounts(categories);
 
-  const handleCategoryChange = (category: string | null) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-  };
+  console.log("Categories:", categories);
+  console.log("Category counts:", categoryCounts);
+
+  const totalPages = Math.ceil((productsData.total || 0) / pageSize);
 
   return (
-    <div>
-      <ThemeToggle className="mb-2 mt-2" />
-      
-      <CategoryFilter
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
-        productsApi={productsApi}
-        className="mb-2"
-      />
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Products</h1>
+        <ThemeToggle />
+      </div>
 
-      <ProductListWithSkeleton
-        isLoading={loading}
-        products={products}
-        onAddToCart={(product) => console.log("Add to cart:", product.id)}
-        onQuickView={(product) => console.log("Quick view:", product.id)}
-        onToggleFavorite={(productId) =>
-          console.log("Toggle favorite:", productId)
-        }
-        className="mb-2"
-      />
+      <Suspense fallback={<div>Loading filters...</div>}>
+        <CategoryFilter
+          categories={categories} // Теперь правильный тип Category[]
+          selectedCategory={selectedCategory}
+          categoryCounts={categoryCounts}
+          className="mb-6"
+        />
+      </Suspense>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        handleNextPage={handleNextPage}
-        handlePreviousPage={handlePreviousPage}
-        handlePageClick={handlePageClick}
-      />
+      <Suspense fallback={<div>Loading products...</div>}>
+        <ProductsSection
+          products={productsData.products}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          selectedCategory={selectedCategory}
+        />
+      </Suspense>
     </div>
   );
 }

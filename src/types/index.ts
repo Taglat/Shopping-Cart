@@ -67,3 +67,20 @@ export interface ComparisonState {
   products: Product[];
   isOpen: boolean;
 }
+
+export interface Category {
+  slug: string;
+  name: string;
+  url: string;
+}
+
+export interface CategoryWithCount extends Category {
+  count: number;
+}
+
+export interface SearchParams {
+  page?: string;
+  category?: string;
+  limit?: string;
+  q?: string; // для поиска
+}

@@ -22,12 +22,12 @@ const PriceDisplay: React.FC<PriceDisplayProps> = ({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <span className="text-lg font-semibold text-gray-900">
+      <span className="text-lg font-semibold">
         {currency}
         {formatPrice(price)}
       </span>
       {hasDiscount && (
-        <span className="text-sm text-gray-500 line-through">
+        <span className="text-sm opacity-60 line-through">
           {currency}
           {formatPrice(originalPrice)}
         </span>

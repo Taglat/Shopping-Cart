@@ -1,127 +1,119 @@
-import { cn } from "@/utils/cn";
-import { useEffect, useState } from "react";
+import Link from "next/link";
 
-interface CategoryFilterProps {
-  categories: string[];
-  selectedCategory: string | null;
-  onCategoryChange: (category: string | null) => void;
-  productsApi: any;
-  className?: string;
+interface Category {
+  slug: string;
+  name: string;
+  url: string;
 }
 
-interface CategoryWithCount {
-  name: string;
+interface CategoryWithCount extends Category {
   count: number;
 }
 
-const skeletonWidths = [100, 120, 90, 110, 95];
+interface CategoryFilterProps {
+  categories: Category[];
+  selectedCategory: string | null;
+  className?: string;
+  categoryCounts?: Record<string, number>;
+}
 
 export default function CategoryFilter({
   categories,
   selectedCategory,
-  onCategoryChange,
-  productsApi,
-  className
+  className = "",
+  categoryCounts = {},
 }: CategoryFilterProps) {
-  const [categoriesWithCounts, setCategoriesWithCounts] = useState<CategoryWithCount[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const categoriesWithCounts: CategoryWithCount[] = categories
+    .map((category) => ({
+      ...category,
+      count: categoryCounts[category.slug] || 0,
+    }))
+    .filter((category) => category.count > 0)
+    .sort((a, b) => b.count - a.count);
 
-  const fetchCategoryCounts = async () => {
-    try {
-      setLoading(true);
-
-      // Fetch total product count
-      const allProductsData = await productsApi.getProducts({ limit: 0 });
-      setTotalCount(allProductsData.total ?? 0);
-
-      // Fetch count for each category
-      const countsPromises = categories.map(async (category) => {
-        try {
-          const data = await productsApi.getProductsByCategory(category, {
-            limit: 0,
-          });
-          return {
-            name: category,
-            count: data.total ?? 0,
-          };
-        } catch (err) {
-          console.error(`Failed to fetch count for category ${category}:`, err);
-          return {
-            name: category,
-            count: 0,
-          };
-        }
-      });
-
-      const categoriesWithCounts = await Promise.all(countsPromises);
-      setCategoriesWithCounts(categoriesWithCounts);
-    } catch (err) {
-      console.error("Failed to fetch category counts:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (categories.length > 0) {
-      fetchCategoryCounts();
-    }
-  }, [categories]);
-
-  if (loading) {
-    return (
-      <div className={className}>
-        <div className="flex flex-wrap gap-2">
-          {skeletonWidths.map((width, index) => (
-            <div
-              key={`skeleton-${index}`}
-              className="h-10 bg-gray-200 rounded-lg animate-pulse skeleton-item"
-              style={{ width: `${width}px` }}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Filter out categories with zero products
-  const filteredCategories = categoriesWithCounts.filter(
-    (category) => category.count > 0
+  const totalProducts = Object.values(categoryCounts).reduce(
+    (sum, count) => sum + count,
+    0
   );
 
+  const isAllSelected = !selectedCategory;
+
   return (
-    <div className={cn(className, "py-2")}>
+    <div className={`pb-4 ${className}`}>
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => onCategoryChange(null)}
-          className={`px-4 py-2 rounded-lg border transition-colors ${
-            selectedCategory === null
-              ? "bg-blue-500 text-white border-blue-500"
-              : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+        {/* All Categories */}
+        <Link
+          href="/"
+          className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors ${
+            isAllSelected
+              ? "bg-[var(--foreground)] text-[var(--background)]"
+              : "bg-[var(--background)] text-[var(--foreground)]"
           }`}
         >
-          All ({totalCount})
-        </button>
+          <span>All Categories</span>
+          {totalProducts > 0 && (
+            <span className="ml-1 px-2 py-0.5 text-xs border rounded-full bg-inherit text-inherit">
+              {totalProducts}
+            </span>
+          )}
+        </Link>
 
-        {filteredCategories.length > 0 ? (
-          filteredCategories.map((category) => (
-            <button
-              key={category.name}
-              onClick={() => onCategoryChange(category.name)}
-              className={`px-4 py-2 rounded-lg border transition-colors ${
-                selectedCategory === category.name
-                  ? "bg-blue-500 text-white border-blue-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+        {/* Other Categories */}
+        {categoriesWithCounts.map((category) => {
+          const isSelected = selectedCategory === category.slug;
+          return (
+            <Link
+              key={category.slug}
+              href={`/?category=${encodeURIComponent(category.slug)}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors capitalize ${
+                isSelected
+                  ? "bg-[var(--foreground)] text-[var(--background)]"
+                  : "bg-[var(--background)] text-[var(--foreground)]"
               }`}
             >
-              {category.name} ({category.count})
-            </button>
-          ))
-        ) : (
-          <div>There are no available product categories</div>
-        )}
+              <span>{category.name}</span>
+              <span className="ml-1 px-2 py-0.5 text-xs border rounded-full bg-inherit text-inherit">
+                {category.count}
+              </span>
+            </Link>
+          );
+        })}
       </div>
+
+      {/* Filter Info */}
+      {selectedCategory && (
+        <div className="mt-3 text-sm">
+          <span>Filtered by: </span>
+          <span className="font-medium capitalize">
+            {
+              categoriesWithCounts.find(
+                (cat) => cat.slug === selectedCategory
+              )?.name || selectedCategory.replace(/-/g, " ")
+            }
+          </span>
+          <span className="ml-1">
+            (
+            {
+              categoriesWithCounts.find(
+                (cat) => cat.slug === selectedCategory
+              )?.count || 0
+            }{" "}
+            products)
+          </span>
+          <Link href="/" className="ml-2 font-bold text-blue-600 underline">
+            Clear filter
+          </Link>
+        </div>
+      )}
+
+      {/* All categories selected - show total */}
+      {!selectedCategory && (
+        <div className="mt-3 text-sm">
+          <span>Filtered by: </span>
+          <span className="font-medium capitalize">All Categories</span>
+          <span className="ml-1">({totalProducts})</span>
+        </div>
+      )}
     </div>
   );
 }

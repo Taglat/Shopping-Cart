@@ -1,4 +1,3 @@
-"use client"
 import React, { useState } from "react";
 
 interface AddToCartButtonProps {
@@ -100,10 +99,10 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
         transition-all duration-200 transform
         ${
           disabled
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            ? "opacity-50 cursor-not-allowed"
             : isAdding
-            ? "bg-green-600 text-white scale-95"
-            : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 active:scale-95"
+            ? ""
+            : ""
         }
         ${className}
       `}

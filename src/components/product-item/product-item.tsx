@@ -32,12 +32,12 @@ const ProductItem: React.FC<ProductItemProps> = ({
 
   return (
     <div
-      className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 hover:border-gray-300 ${className}`}
+      className={`group relative rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border hover:border-opacity-50 flex flex-col ${className}`}
     >
       {/* Badges */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
         {hasDiscount && (
-          <ProductBadge type="discount" value={product.discountPercentage} />
+          <ProductBadge className="border text-[var(--foreground)] bg-[var(--background)]" type="discount" value={product.discountPercentage} />
         )}
         {!isInStock && <ProductBadge type="out-of-stock" />}
       </div>
@@ -65,34 +65,43 @@ const ProductItem: React.FC<ProductItemProps> = ({
       </div>
 
       {/* Product Info */}
-      <div className="p-4">
-        {/* Brand */}
-        {product.brand && <p className="text-sm text-gray-500 mb-1">{product.brand}</p>}
+      <div className="p-4 flex flex-col justify-between flex-1">
+        <div>
+          {/* Brand */}
+          <div className="h-5 mb-1">
+            {product.brand && (
+              <p className="text-sm opacity-70">{product.brand}</p>
+            )}
+          </div>
 
-        {/* Title */}
-        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2 h-10">
-          {product.title}
-        </h3>
+          {/* Title */}
+          <h3 className="text-sm font-medium line-clamp-2 mb-2 h-10">
+            {product.title}
+          </h3>
 
-        {/* Rating */}
-        <div className="mb-2">
-          <ProductRating rating={product.rating} />
-        </div>
+          {/* Rating */}
+          <div className="mb-2">
+            <ProductRating rating={product.rating} />
+          </div>
 
-        {/* Price */}
-        <div className="mb-3">
-          <PriceDisplay
-            price={hasDiscount ? discountedPrice : product.price}
-            originalPrice={hasDiscount ? product.price : undefined}
-            currency="$"
-          />
+          {/* Price */}
+          <div className="mb-3">
+            <PriceDisplay
+              price={hasDiscount ? discountedPrice : product.price}
+              originalPrice={hasDiscount ? product.price : undefined}
+              currency="$"
+            />
+          </div>
         </div>
 
         {/* Add to Cart Button */}
         <AddToCartButton
-          onClick={() => onAddToCart ? onAddToCart(product) : console.log(`product ${product.id}`) }
-          disabled={!isInStock}
-          className="w-full"
+          onClick={() =>
+            onAddToCart
+              ? onAddToCart(product)
+              : console.log(`product ${product.id}`)
+          }
+          className="w-full border text-[var(--foreground)] bg-[var(--background)]"
         />
       </div>
     </div>

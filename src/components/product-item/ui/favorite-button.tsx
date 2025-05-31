@@ -1,5 +1,3 @@
-import React from "react";
-
 interface FavoriteButtonProps {
   isFavorite: boolean;
   onClick: () => void;
@@ -16,12 +14,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       onClick={onClick}
       className={`
         p-2 rounded-full transition-all duration-200 transform hover:scale-110 active:scale-95
-        ${
-          isFavorite
-            ? "bg-red-100 text-red-600 hover:bg-red-200"
-            : "bg-white text-gray-400 hover:bg-gray-50 hover:text-red-500"
-        }
-        shadow-sm border border-gray-200
+        shadow-sm border
         ${className}
       `}
       aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}

@@ -22,7 +22,7 @@ const ProductRating: React.FC<ProductRatingProps> = ({
       <div key={index} className="relative">
         {/* Empty star */}
         <svg
-          className="w-4 h-4 text-gray-300"
+          className="w-4 h-4 opacity-30"
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -32,7 +32,7 @@ const ProductRating: React.FC<ProductRatingProps> = ({
         {/* Filled star or half star */}
         {(isFilled || isHalfFilled) && (
           <svg
-            className="absolute top-0 left-0 w-4 h-4 text-yellow-400"
+            className="absolute top-0 left-0 w-4 h-4 opacity-80"
             fill="currentColor"
             viewBox="0 0 20 20"
             style={{
@@ -50,7 +50,7 @@ const ProductRating: React.FC<ProductRatingProps> = ({
     <div className={`flex items-center gap-1 ${className}`}>
       <div className="flex items-center">{stars}</div>
       {showNumber && (
-        <span className="text-sm text-gray-600 ml-1">{rating.toFixed(1)}</span>
+        <span className="text-sm opacity-60 ml-1">{rating.toFixed(1)}</span>
       )}
     </div>
   );

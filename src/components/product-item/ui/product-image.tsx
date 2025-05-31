@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 import Image from "next/image";
 
@@ -29,13 +28,11 @@ const ProductImage: React.FC<ProductImageProps> = ({
 
   if (hasError) {
     return (
-      <div
-        className={`bg-gray-100 flex items-center justify-center ${className}`}
-      >
+      <div className={`flex items-center justify-center ${className}`}>
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center opacity-30">
             <svg
-              className="w-6 h-6 text-gray-500"
+              className="w-6 h-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -54,7 +51,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
               />
             </svg>
           </div>
-          <p className="text-xs text-gray-500">Image not found</p>
+          <p className="text-xs opacity-50">Image not found</p>
         </div>
       </div>
     );
@@ -63,7 +60,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
   return (
     <div className={`relative ${className}`}>
       {isLoading && (
-        <div className="absolute inset-0 bg-gray-100 animate-pulse rounded" />
+        <div className="absolute inset-0 animate-pulse rounded opacity-10" />
       )}
       <Image
         src={src}

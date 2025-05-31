@@ -1,4 +1,5 @@
 import {
+  Category,
   Product,
   ProductSchema,
   ProductsParams,
@@ -17,10 +18,10 @@ export class ApiError extends Error {
   }
 }
 
-// Базовая функция для HTTP запросов
+// Базовая функция для HTTP запросов с кешированием для серверных компонентов
 async function fetchApi<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit & { cache?: RequestCache; revalidate?: number }
 ): Promise<T> {
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -28,6 +29,11 @@ async function fetchApi<T>(
       headers: {
         "Content-Type": "application/json",
         ...options?.headers,
+      },
+      // Настройки кеширования Next.js
+      cache: options?.cache || "force-cache",
+      next: {
+        revalidate: options?.revalidate || 3600, // 1 час по умолчанию
       },
     });
 
@@ -48,33 +54,26 @@ async function fetchApi<T>(
   }
 }
 
-// API методы для продуктов
+// API методы для продуктов (серверная версия)
 export const productsApi = {
   // Получить все продукты с фильтрацией и пагинацией
-  async getProducts(params: ProductsParams = {}): Promise<ProductsResponse> {
-    const searchParams = new URLSearchParams();
-
-    if (params.limit) searchParams.append("limit", params.limit.toString());
-    if (params.skip) searchParams.append("skip", params.skip.toString());
-    if (params.q) searchParams.append("q", params.q);
-    if (params.sortBy) searchParams.append("sortBy", params.sortBy);
-    if (params.order) searchParams.append("order", params.order);
-
-    const query = searchParams.toString();
-    const endpoint = params.q
-      ? `/products/search?${query}`
-      : `/products?${query}`;
-
-    const data = await fetchApi<unknown>(endpoint);
-
-    // Валидация данных с помощью Zod
-    const validatedData = ProductsResponseSchema.parse(data);
-    return validatedData;
+  async getProducts(params: { limit?: number; skip?: number } = {}) {
+    const { limit = 12, skip = 0 } = params;
+    const response = await fetch(
+      `https://dummyjson.com/products?limit=${limit}&skip=${skip}`
+    );
+    if (!response.ok) throw new Error("Failed to fetch products");
+    return response.json();
   },
 
   // Получить продукт по ID
-  async getProductById(id: number): Promise<Product> {
-    const data = await fetchApi<unknown>(`/products/${id}`);
+  async getProductById(
+    id: number,
+    options?: { revalidate?: number }
+  ): Promise<Product> {
+    const data = await fetchApi<unknown>(`/products/${id}`, {
+      revalidate: options?.revalidate || 3600, // 1 час для отдельного продукта
+    });
     const validatedData = ProductSchema.parse(data);
     return validatedData;
   },
@@ -82,7 +81,8 @@ export const productsApi = {
   // Получить продукты по категории
   async getProductsByCategory(
     category: string,
-    params: ProductsParams = {}
+    params: ProductsParams = {},
+    options?: { revalidate?: number }
   ): Promise<ProductsResponse> {
     const searchParams = new URLSearchParams();
 
@@ -96,21 +96,92 @@ export const productsApi = {
       category
     )}?${query}`;
 
-    const data = await fetchApi<unknown>(endpoint);
+    const data = await fetchApi<unknown>(endpoint, {
+      revalidate: options?.revalidate || 600, // 10 минут для категорий
+    });
     const validatedData = ProductsResponseSchema.parse(data);
     return validatedData;
   },
 
   // Получить все категории
   async getCategories(): Promise<string[]> {
-    const data = await fetchApi<string[]>("/products/categories");
-    return data;
+    try {
+      const response = await fetch("https://dummyjson.com/products/categories");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Проверяем, что получили массив
+      if (Array.isArray(data)) {
+        // Если это массив объектов с нужными полями
+        if (
+          data.length > 0 &&
+          typeof data[0] === "object" &&
+          "slug" in data[0]
+        ) {
+          return data.map((cat: Category) => cat.slug);
+        }
+
+        // Если это массив строк (старый формат API)
+        if (data.length > 0 && typeof data[0] === "string") {
+          return data;
+        }
+      }
+
+      return [];
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      return [];
+    }
+  },
+
+  // Получить категории как объекты
+  async getCategoriesWithDetails(): Promise<Category[]> {
+    try {
+      const response = await fetch("https://dummyjson.com/products/categories");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Проверяем, что получили массив
+      if (Array.isArray(data)) {
+        // Если это массив объектов с нужными полями
+        if (
+          data.length > 0 &&
+          typeof data[0] === "object" &&
+          "slug" in data[0]
+        ) {
+          return data as Category[];
+        }
+
+        // Если это массив строк (старый формат API), преобразуем
+        if (data.length > 0 && typeof data[0] === "string") {
+          return data.map((categoryName: string) => ({
+            slug: categoryName.toLowerCase().replace(/\s+/g, "-"),
+            name: categoryName.charAt(0).toUpperCase() + categoryName.slice(1),
+            url: `https://dummyjson.com/products/category/${categoryName
+              .toLowerCase()
+              .replace(/\s+/g, "-")}`,
+          }));
+        }
+      }
+
+      return [];
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      return [];
+    }
   },
 
   // Поиск продуктов
   async searchProducts(
     query: string,
-    params: ProductsParams = {}
+    params: ProductsParams = {},
+    options?: { revalidate?: number }
   ): Promise<ProductsResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append("q", query);
@@ -121,7 +192,9 @@ export const productsApi = {
     if (params.order) searchParams.append("order", params.order);
 
     const endpoint = `/products/search?${searchParams.toString()}`;
-    const data = await fetchApi<unknown>(endpoint);
+    const data = await fetchApi<unknown>(endpoint, {
+      cache: "no-store", // Не кешируем поиск
+    });
     const validatedData = ProductsResponseSchema.parse(data);
     return validatedData;
   },
@@ -155,5 +228,39 @@ export const apiUtils = {
       }
     });
     return url.toString();
+  },
+
+  // Генерация статических параметров для динамических маршрутов
+  async generateStaticParams() {
+    try {
+      const categories = await productsApi.getCategories();
+      return categories.map((category) => ({
+        slug: encodeURIComponent(category),
+      }));
+    } catch (error) {
+      console.error("Failed to generate static params:", error);
+      return [];
+    }
+  },
+
+  // Генерация метаданных для продуктов
+  async generateProductMetadata(id: number) {
+    try {
+      const product = await productsApi.getProductById(id);
+      return {
+        title: product.title,
+        description: product.description,
+        openGraph: {
+          title: product.title,
+          description: product.description,
+          images: [product.thumbnail],
+        },
+      };
+    } catch (error) {
+      return {
+        title: "Product Not Found",
+        description: "The requested product could not be found.",
+      };
+    }
   },
 };

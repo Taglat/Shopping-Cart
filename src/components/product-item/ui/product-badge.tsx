@@ -14,27 +14,27 @@ const ProductBadge: React.FC<ProductBadgeProps> = ({
       case "discount":
         return {
           text: value ? `-${Math.round(value)}%` : "Sale",
-          className: "bg-red-500 text-white",
+          className: "opacity-90",
         };
       case "new":
         return {
           text: "New",
-          className: "bg-green-500 text-white",
+          className: "opacity-90",
         };
       case "hot":
         return {
           text: "Hot",
-          className: "bg-orange-500 text-white",
+          className: "opacity-90",
         };
       case "out-of-stock":
         return {
           text: "Out of Stock",
-          className: "bg-gray-500 text-white",
+          className: "opacity-70",
         };
       default:
         return {
           text: "",
-          className: "bg-gray-500 text-white",
+          className: "opacity-70",
         };
     }
   };

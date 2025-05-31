@@ -14,8 +14,7 @@ const QuickViewButton: React.FC<QuickViewButtonProps> = ({
       onClick={onClick}
       className={`
         p-2 rounded-full transition-all duration-200 transform hover:scale-110 active:scale-95
-        bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600
-        shadow-sm border border-gray-200
+        shadow-sm border opacity-90 hover:opacity-100
         ${className}
       `}
       aria-label="Quick view"

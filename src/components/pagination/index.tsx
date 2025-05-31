@@ -1,17 +1,27 @@
-const Pagination = ({
-  totalPages,
-  currentPage,
-  handlePreviousPage,
-  handleNextPage,
-  handlePageClick,
-}: {
-  totalPages: number;
+import Link from "next/link";
+
+interface PaginationProps {
   currentPage: number;
-  handlePreviousPage: () => void;
-  handleNextPage: () => void;
-  handlePageClick: (page: number) => void;
-}) => {
+  totalPages: number;
+  baseUrl: string;
+  className?: string;
+}
+
+export default function Pagination({
+  currentPage,
+  totalPages,
+  baseUrl,
+  className = "",
+}: PaginationProps) {
+  if (totalPages <= 1) return null;
+
   const maxVisible = 5;
+
+  const generateUrl = (page: number) => {
+    const url = new URL(baseUrl, "http://localhost");
+    url.searchParams.set("page", page.toString());
+    return `${url.pathname}${url.search}`;
+  };
 
   const getVisiblePages = () => {
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
@@ -27,61 +37,102 @@ const Pagination = ({
   const visiblePages = getVisiblePages();
 
   return (
-    <div className="flex items-center justify-center gap-2 p-4">
-      <button
-        disabled={currentPage <= 1}
-        onClick={() => handlePageClick(1)}
-        className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-200 transition-colors"
-        aria-label="First page"
-      >
-        {"«"}
-      </button>
-      <button
-        disabled={currentPage <= 1}
-        onClick={handlePreviousPage}
-        className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-200 transition-colors"
-        aria-label="Previous page"
-      >
-        {"<"}
-      </button>
-
+    <nav
+      className={`flex items-center justify-center gap-2 p-4 font-sans ${className}`}
+      style={{ fontFamily: "var(--font-sans)" }}
+    >
+      {/* First page button */}
+      {currentPage > 1 ? (
+        <Link
+          href={generateUrl(1)}
+          className="px-3 py-2 rounded-lg border transition-colors duration-200"
+          aria-label="First page"
+        >
+          {"«"}
+        </Link>
+      ) : (
+        <span
+          className="px-3 py-2 rounded-lg border cursor-not-allowed text-gray-400"
+          aria-disabled="true"
+        >
+          {"«"}
+        </span>
+      )}
+      {/* Previous button */}
+      {currentPage > 1 ? (
+        <Link
+          href={generateUrl(currentPage - 1)}
+          className="px-3 py-2 rounded-lg border transition-colors duration-200"
+          aria-label="Previous page"
+        >
+          {"<"}
+        </Link>
+      ) : (
+        <span
+          className="px-3 py-2 rounded-lg border cursor-not-allowed text-gray-400"
+          aria-disabled="true"
+        >
+          {"<"}
+        </span>
+      )}
+      {/* Page numbers */}
       <div className="flex gap-1">
-        {visiblePages.map((page) => (
-          <button
-            key={page}
-            onClick={() => handlePageClick(page)}
-            className={`px-3 py-1 border rounded ${
-              page === currentPage
-                ? "bg-gray-300 font-semibold"
-                : "hover:bg-gray-200"
-            } transition-colors`}
-            disabled={page === currentPage}
-            aria-label={`Page ${page}`}
-            aria-current={page === currentPage ? "page" : undefined}
-          >
-            {page}
-          </button>
-        ))}
+        {visiblePages.map((page) =>
+          page === currentPage ? (
+            <span
+              key={page}
+              className="px-3 py-2 border rounded-lg text-[var(--background)] bg-[var(--foreground)]"
+              aria-label={`Page ${page}`}
+              aria-current="page"
+            >
+              {page}
+            </span>
+          ) : (
+            <Link
+              key={page}
+              href={generateUrl(page)}
+              className="px-3 py-2 rounded-lg border"
+              aria-label={`Page ${page}`}
+            >
+              {page}
+            </Link>
+          )
+        )}
       </div>
-
-      <button
-        disabled={currentPage >= totalPages}
-        onClick={handleNextPage}
-        className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-200 transition-colors"
-        aria-label="Next page"
-      >
-        {">"}
-      </button>
-      <button
-        disabled={currentPage >= totalPages}
-        onClick={() => handlePageClick(totalPages)}
-        className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-200 transition-colors"
-        aria-label="Last page"
-      >
-        {"»"}
-      </button>
-    </div>
+      {/* Next button */}
+      {currentPage < totalPages ? (
+        <Link
+          href={generateUrl(currentPage + 1)}
+          className="px-3 py-2 rounded-lg border transition-colors duration-200"
+          aria-label="Next page"
+        >
+          {">"}
+        </Link>
+      ) : (
+        <span
+          className="px-3 py-2 rounded-lg border cursor-not-allowed text-gray-400"
+          aria-disabled="true"
+        >
+          {">"}
+        </span>
+      )}
+      {/* Last page button */}
+      {currentPage < totalPages ? (
+        <Link
+          href={generateUrl(totalPages)}
+          className="px-3 py-2 rounded-lg border transition-colors duration-200"
+          aria-label="Last page"
+        >
+          {"»"}
+        </Link>
+      ) : (
+        <span
+          className="px-3 py-2 rounded-lg border cursor-not-allowed text-gray-400"
+          aria-disabled="true"
+        >
+          {"»"}
+        </span>
+      )}
+    </nav>
   );
-};
-
-export default Pagination;
+}
