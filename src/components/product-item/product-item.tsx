@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Product } from "@/types";
 import ProductImage from "./ui/product-image";
 import PriceDisplay from "./ui/price-display";
@@ -37,13 +38,17 @@ const ProductItem: React.FC<ProductItemProps> = ({
       {/* Badges */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
         {hasDiscount && (
-          <ProductBadge className="border text-[var(--foreground)] bg-[var(--background)]" type="discount" value={product.discountPercentage} />
+          <ProductBadge
+            className="border text-[var(--foreground)] bg-[var(--background)]"
+            type="discount"
+            value={product.discountPercentage}
+          />
         )}
         {!isInStock && <ProductBadge type="out-of-stock" />}
       </div>
 
       {/* Action buttons */}
-      <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      {/* <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         {onToggleFavorite && (
           <FavoriteButton
             isFavorite={isFavorite}
@@ -53,55 +58,61 @@ const ProductItem: React.FC<ProductItemProps> = ({
         {onQuickView && (
           <QuickViewButton onClick={() => onQuickView(product)} />
         )}
-      </div>
+      </div> */}
 
-      {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden rounded-t-lg">
-        <ProductImage
-          src={product.thumbnail}
-          alt={product.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      </div>
-
-      {/* Product Info */}
-      <div className="p-4 flex flex-col justify-between flex-1">
-        <div>
-          {/* Brand */}
-          <div className="h-5 mb-1">
-            {product.brand && (
-              <p className="text-sm opacity-70">{product.brand}</p>
-            )}
-          </div>
-
-          {/* Title */}
-          <h3 className="text-sm font-medium line-clamp-2 mb-2 h-10">
-            {product.title}
-          </h3>
-
-          {/* Rating */}
-          <div className="mb-2">
-            <ProductRating rating={product.rating} />
-          </div>
-
-          {/* Price */}
-          <div className="mb-3">
-            <PriceDisplay
-              price={hasDiscount ? discountedPrice : product.price}
-              originalPrice={hasDiscount ? product.price : undefined}
-              currency="$"
-            />
-          </div>
+      {/* Кликабельная область для перехода на страницу продукта */}
+      <Link href={`/product/${product.id}`} className="flex flex-col flex-1">
+        {/* Product Image */}
+        <div className="relative aspect-square overflow-hidden rounded-t-lg">
+          <ProductImage
+            src={product.thumbnail}
+            alt={product.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
         </div>
 
-        {/* Add to Cart Button */}
+        {/* Product Info */}
+        <div className="p-4 flex flex-col justify-between flex-1">
+          <div>
+            {/* Brand */}
+            <div className="h-5 mb-1">
+              {product.brand && (
+                <p className="text-sm opacity-70">{product.brand}</p>
+              )}
+            </div>
+
+            {/* Title */}
+            <h3 className="text-sm font-medium line-clamp-2 mb-2 h-10">
+              {product.title}
+            </h3>
+
+            {/* Rating */}
+            <div className="mb-2">
+              <ProductRating rating={product.rating} />
+            </div>
+
+            {/* Price */}
+            <div className="mb-3">
+              <PriceDisplay
+                price={hasDiscount ? discountedPrice : product.price}
+                originalPrice={hasDiscount ? product.price : undefined}
+                currency="$"
+              />
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Add to Cart Button - вне Link для предотвращения конфликта */}
+      <div className="px-4 pb-4">
         <AddToCartButton
-          onClick={() =>
+          onClick={(e) => {
+            e.preventDefault();
             onAddToCart
               ? onAddToCart(product)
-              : console.log(`product ${product.id}`)
-          }
-          className="w-full border text-[var(--foreground)] bg-[var(--background)]"
+              : console.log(`product ${product.id}`);
+          }}
+          className="w-full border text-gray-900 dark:text-gray-100 bg-white py-2 dark:bg-gray-800 border-gray-400 dark:border-gray-500"
         />
       </div>
     </div>

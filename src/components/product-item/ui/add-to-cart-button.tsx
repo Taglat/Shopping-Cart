@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 interface AddToCartButtonProps {
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void; // Updated type
   disabled?: boolean;
   loading?: boolean;
   className?: string;
@@ -15,11 +15,11 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
 }) => {
   const [isAdding, setIsAdding] = useState(false);
 
-  const handleClick = async () => {
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled || loading) return;
 
     setIsAdding(true);
-    onClick && onClick();
+    onClick && onClick(e); // Pass the event to onClick
 
     // Reset animation after a short delay
     setTimeout(() => {
@@ -95,15 +95,9 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
       onClick={handleClick}
       disabled={disabled || loading}
       className={`
-        flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium text-sm
+        flex items-center justify-center gap-2 px-4  rounded-md font-medium text-sm
         transition-all duration-200 transform
-        ${
-          disabled
-            ? "opacity-50 cursor-not-allowed"
-            : isAdding
-            ? ""
-            : ""
-        }
+        ${disabled ? "opacity-50 cursor-not-allowed" : isAdding ? "" : ""}
         ${className}
       `}
     >

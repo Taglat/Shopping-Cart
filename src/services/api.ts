@@ -6,6 +6,7 @@ import {
   ProductsResponse,
   ProductsResponseSchema,
 } from "@/types";
+import { id } from "zod/v4/locales";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://dummyjson.com";
@@ -197,6 +198,14 @@ export const productsApi = {
     });
     const validatedData = ProductsResponseSchema.parse(data);
     return validatedData;
+  },
+  
+  async getProduct(id: number) {
+    const response = await fetch(`https://dummyjson.com/products/${id}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch product ${id}`);
+    }
+    return response.json();
   },
 };
 
