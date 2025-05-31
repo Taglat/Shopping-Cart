@@ -95,9 +95,10 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
       onClick={handleClick}
       disabled={disabled || loading}
       className={`
-        flex items-center justify-center gap-2 px-4  rounded-md font-medium text-sm
-        transition-all duration-200 transform
-        ${disabled ? "opacity-50 cursor-not-allowed" : isAdding ? "" : ""}
+        h-10 px-6 flex items-center justify-center gap-2 rounded-md font-medium text-sm
+        bg-transparent border border-border text-foreground
+        hover:bg-accent transition-colors
+        disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
       `}
     >

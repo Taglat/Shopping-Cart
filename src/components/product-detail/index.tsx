@@ -8,15 +8,14 @@ import AddToCartButton from "../product-item/ui/add-to-cart-button";
 
 interface ProductDetailProps {
   product: Product;
-  onAddToCart?: (product: Product) => void;
+  onAddToCart: (product: Product) => void;
 }
 
-export default function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
+export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const handleAddToCart = () => {
-    console.log("Add to cart:", product.id);
-    // Логика добавления в корзину
+    onAddToCart(product);
   };
 
   const discountedPrice =
@@ -148,9 +147,7 @@ export default function ProductDetail({ product, onAddToCart }: ProductDetailPro
               <AddToCartButton
                 onClick={(e) => {
                   e.preventDefault();
-                  onAddToCart
-                    ? onAddToCart(product)
-                    : console.log(`product ${product.id}`);
+                  onAddToCart(product);
                 }}
                 className="w-full border text-gray-900 dark:text-gray-100 py-3 bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-500"
               />

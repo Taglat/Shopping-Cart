@@ -1,87 +1,31 @@
-import { notFound } from "next/navigation";
-import { Metadata } from "next";
-import ProductDetail from "@/components/product-detail";
-import { Product } from "@/types";
+import { productsApi } from "@/services/api";
+import { ProductDetailClientWrapper } from "@/components/product-detail/client-wrapper";
 import Header from "@/components/header";
 
 interface ProductPageProps {
-  params: Promise<{ id: string }>;
-}
-
-async function getProduct(id: number): Promise<Product | null> {
-  try {
-    const response = await fetch(`https://dummyjson.com/products/${id}`, {
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    return null;
-  }
+  params: {
+    id: string;
+  };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const resolvedParams = await params;
-  const productId = parseInt(resolvedParams.id);
-
-  if (isNaN(productId)) {
-    notFound();
-  }
-
-  const product = await getProduct(productId);
-
-  if (!product) {
-    notFound();
-  }
+  const productId = parseInt(params.id);
+  const product = await productsApi.getProduct(productId);
 
   return (
-    <main className="">
-      <Header title="🛒 Cart" />
-
-      <ProductDetail product={product} />
-    </main>
+    <div className="container mx-auto px-4">
+      <Header />
+      
+      {!product ? (
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold mb-4">Product not found</h1>
+          <p className="text-gray-600">
+            The product you are looking for does not exist.
+          </p>
+        </div>
+      ) : (
+        <ProductDetailClientWrapper product={product} />
+      )}
+    </div>
   );
-}
-
-export async function generateMetadata({
-  params,
-}: ProductPageProps): Promise<Metadata> {
-  const resolvedParams = await params;
-  const productId = parseInt(resolvedParams.id);
-
-  if (isNaN(productId)) {
-    return {
-      title: "Product Not Found",
-    };
-  }
-
-  const product = await getProduct(productId);
-
-  if (!product) {
-    return {
-      title: "Product Not Found",
-    };
-  }
-
-  return {
-    title: `${product.title} - Your Store`,
-    description: product.description,
-    openGraph: {
-      title: product.title,
-      description: product.description,
-      images: [
-        {
-          url: product.thumbnail,
-          width: 800,
-          height: 600,
-          alt: product.title,
-        },
-      ],
-    },
-  };
 }

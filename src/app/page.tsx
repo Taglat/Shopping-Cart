@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { productsApi } from "@/services/api";
-import ProductsSection from "@/components/products-section";
+import { ProductsSectionClientWrapper } from "@/components/products-section/client-wrapper";
 import CategoryFilter from "@/components/filter/category-filter";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import Header from "@/components/header";
@@ -125,32 +125,29 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // Параллельные запросы
   const [productsData, categories] = await Promise.all([
     getProducts(currentPage, selectedCategory || undefined, pageSize),
-    getCategories(), // Теперь возвращает Category[]
+    getCategories(),
   ]);
 
   // Получаем счетчики категорий
   const categoryCounts = await getCategoryCounts(categories);
 
-  console.log("Categories:", categories);
-  console.log("Category counts:", categoryCounts);
-
   const totalPages = Math.ceil((productsData.total || 0) / pageSize);
 
   return (
     <div className="container mx-auto px-4">
-      <Header title="🛒 Cart" />
+      <Header />
 
       <Suspense fallback={<div>Loading filters...</div>}>
         <CategoryFilter
-          categories={categories} // Теперь правильный тип Category[]
+          categories={categories}
           selectedCategory={selectedCategory}
           categoryCounts={categoryCounts}
-          className="mb-2 mt-16"
+          className="mb-2 mt-20"
         />
       </Suspense>
 
       <Suspense fallback={<div>Loading products...</div>}>
-        <ProductsSection
+        <ProductsSectionClientWrapper
           products={productsData.products}
           currentPage={currentPage}
           totalPages={totalPages}

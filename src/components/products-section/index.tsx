@@ -10,28 +10,19 @@ interface ProductsSectionProps {
   totalPages: number;
   selectedCategory: string | null;
   className?: string;
+  onAddToCart: (product: Product) => void;
 }
 
-export default function ProductsSection({
+export function ProductsSection({
   products,
   currentPage,
   totalPages,
   selectedCategory,
   className = "",
+  onAddToCart,
 }: ProductsSectionProps) {
   const handleAddToCart = (product: Product) => {
-    console.log("Add to cart:", product.id);
-    // Здесь будет логика добавления в корзину
-  };
-
-  const handleQuickView = (product: Product) => {
-    console.log("Quick view:", product.id);
-    // Здесь будет логика быстрого просмотра
-  };
-
-  const handleToggleFavorite = (productId: number) => {
-    console.log("Toggle favorite:", productId);
-    // Здесь будет логика избранного
+    onAddToCart(product);
   };
 
   if (!products.length) {
@@ -56,8 +47,6 @@ export default function ProductsSection({
       <ProductList
         products={products}
         onAddToCart={handleAddToCart}
-        onQuickView={handleQuickView}
-        onToggleFavorite={handleToggleFavorite}
         className="mb-8"
       />
 

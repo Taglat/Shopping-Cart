@@ -6,30 +6,26 @@ import PriceDisplay from "./ui/price-display";
 import ProductRating from "./ui/product-rating";
 import AddToCartButton from "./ui/add-to-cart-button";
 import ProductBadge from "./ui/product-badge";
-import FavoriteButton from "./ui/favorite-button";
-import QuickViewButton from "./ui/quick-view-button";
 
 interface ProductItemProps {
   product: Product;
-  onAddToCart?: (product: Product) => void;
-  onQuickView?: (product: Product) => void;
-  onToggleFavorite?: (productId: number) => void;
-  isFavorite?: boolean;
+  onAddToCart: (product: Product) => void;
   className?: string;
 }
 
 const ProductItem: React.FC<ProductItemProps> = ({
   product,
   onAddToCart,
-  onQuickView,
-  onToggleFavorite,
-  isFavorite = false,
   className = "",
 }) => {
   const discountedPrice =
     product.price * (1 - product.discountPercentage / 100);
   const hasDiscount = product.discountPercentage > 0;
   const isInStock = product.stock > 0;
+
+  const handleAddToCart = () => {
+    onAddToCart(product);
+  };
 
   return (
     <div
@@ -46,19 +42,6 @@ const ProductItem: React.FC<ProductItemProps> = ({
         )}
         {!isInStock && <ProductBadge type="out-of-stock" />}
       </div>
-
-      {/* Action buttons */}
-      {/* <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        {onToggleFavorite && (
-          <FavoriteButton
-            isFavorite={isFavorite}
-            onClick={() => onToggleFavorite(product.id)}
-          />
-        )}
-        {onQuickView && (
-          <QuickViewButton onClick={() => onQuickView(product)} />
-        )}
-      </div> */}
 
       {/* Кликабельная область для перехода на страницу продукта */}
       <Link href={`/product/${product.id}`} className="flex flex-col flex-1">
@@ -106,12 +89,7 @@ const ProductItem: React.FC<ProductItemProps> = ({
       {/* Add to Cart Button - вне Link для предотвращения конфликта */}
       <div className="px-4 pb-4">
         <AddToCartButton
-          onClick={(e) => {
-            e.preventDefault();
-            onAddToCart
-              ? onAddToCart(product)
-              : console.log(`product ${product.id}`);
-          }}
+          onClick={handleAddToCart}
           className="w-full border text-gray-900 dark:text-gray-100 bg-white py-2 dark:bg-gray-800 border-gray-400 dark:border-gray-500"
         />
       </div>
