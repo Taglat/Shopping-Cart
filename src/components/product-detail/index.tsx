@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Product } from "@/types";
 import AddToCartButton from "../product-item/ui/add-to-cart-button";
 
@@ -11,12 +10,11 @@ interface ProductDetailProps {
   onAddToCart: (product: Product) => void;
 }
 
-export function ProductDetail({ product, onAddToCart }: ProductDetailProps) {
+export default function ProductDetail({
+  product,
+  onAddToCart,
+}: ProductDetailProps) {
   const [selectedImage, setSelectedImage] = useState(0);
-
-  const handleAddToCart = () => {
-    onAddToCart(product);
-  };
 
   const discountedPrice =
     product.price * (1 - product.discountPercentage / 100);

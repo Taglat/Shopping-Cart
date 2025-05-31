@@ -3,13 +3,13 @@ import { ProductDetailClientWrapper } from "@/components/product-detail/client-w
 import Header from "@/components/header";
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const productId = parseInt(params.id);
+  const productId = parseInt((await params).id);
   const product = await productsApi.getProduct(productId);
 
   return (

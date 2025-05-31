@@ -13,7 +13,7 @@ export function Cart() {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-4">Your cart is empty</h2>
         <p className="text-gray-600 mb-8">
-          Looks like you haven't added any items to your cart yet.
+          Looks like you haven&apos;t added any items to your cart yet.
         </p>
         <Link
           href="/"

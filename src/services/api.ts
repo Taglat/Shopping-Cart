@@ -6,7 +6,6 @@ import {
   ProductsResponse,
   ProductsResponseSchema,
 } from "@/types";
-import { id } from "zod/v4/locales";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "https://dummyjson.com";
@@ -83,7 +82,6 @@ export const productsApi = {
   async getProductsByCategory(
     category: string,
     params: ProductsParams = {},
-    options?: { revalidate?: number }
   ): Promise<ProductsResponse> {
     const searchParams = new URLSearchParams();
 
@@ -98,7 +96,7 @@ export const productsApi = {
     )}?${query}`;
 
     const data = await fetchApi<unknown>(endpoint, {
-      revalidate: options?.revalidate || 600, // 10 минут для категорий
+      revalidate: 600, // 10 минут для категорий
     });
     const validatedData = ProductsResponseSchema.parse(data);
     return validatedData;
@@ -182,7 +180,6 @@ export const productsApi = {
   async searchProducts(
     query: string,
     params: ProductsParams = {},
-    options?: { revalidate?: number }
   ): Promise<ProductsResponse> {
     const searchParams = new URLSearchParams();
     searchParams.append("q", query);
@@ -265,7 +262,8 @@ export const apiUtils = {
           images: [product.thumbnail],
         },
       };
-    } catch (error) {
+    } catch (_error) {
+      void _error; // Mark error as used to satisfy linter
       return {
         title: "Product Not Found",
         description: "The requested product could not be found.",

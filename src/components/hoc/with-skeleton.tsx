@@ -7,7 +7,7 @@ interface WithSkeletonOptions {
   className?: string;
 }
 
-function withSkeleton<T extends Record<string, any>>(
+function withSkeleton<T extends Record<string, unknown>>(
   Component: React.ComponentType<T>,
   options: WithSkeletonOptions = {}
 ) {

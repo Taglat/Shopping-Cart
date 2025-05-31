@@ -9,7 +9,10 @@ import ProductBadge from "./ui/product-badge";
 
 interface ProductItemProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
+  onAddToCart?: (product: Product) => void;
+  onQuickView?: (product: Product) => void;
+  onToggleFavorite?: (productId: number) => void;
+  isFavorite?: boolean;
   className?: string;
 }
 
@@ -24,7 +27,9 @@ const ProductItem: React.FC<ProductItemProps> = ({
   const isInStock = product.stock > 0;
 
   const handleAddToCart = () => {
-    onAddToCart(product);
+    if (onAddToCart) {
+      onAddToCart(product);
+    }
   };
 
   return (

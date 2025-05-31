@@ -19,7 +19,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     if (disabled || loading) return;
 
     setIsAdding(true);
-    onClick && onClick(e); // Pass the event to onClick
+    if (onClick) { onClick(e); } // Pass the event to onClick
 
     // Reset animation after a short delay
     setTimeout(() => {

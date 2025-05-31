@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { productsApi } from "@/services/api";
 import { ProductsSectionClientWrapper } from "@/components/products-section/client-wrapper";
 import CategoryFilter from "@/components/filter/category-filter";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import Header from "@/components/header";
 
 interface Category {
@@ -12,11 +11,16 @@ interface Category {
 }
 
 interface HomePageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string;
     category?: string;
     limit?: string;
-  };
+  }>;
+}
+
+interface CategoryCountResult {
+  slug: string;
+  count: number;
 }
 
 async function getProducts(
@@ -41,40 +45,17 @@ async function getCategories(): Promise<Category[]> {
   try {
     const rawCategories = await productsApi.getCategories();
 
-    // Адаптер для преобразования данных в нужный формат
+    // Адаптер для преобразования данных из string[] в Category[]
     if (Array.isArray(rawCategories)) {
-      return rawCategories.map((item: any) => {
-        // Если это уже объект с нужными полями
-        if (typeof item === "object" && item.slug && item.name) {
-          return item as Category;
-        }
-
-        // Если это строка, преобразуем в объект
-        if (typeof item === "string") {
-          return {
-            slug: item.toLowerCase().replace(/\s+/g, "-"),
-            name:
-              item.charAt(0).toUpperCase() + item.slice(1).replace(/-/g, " "),
-            url: `https://dummyjson.com/products/category/${item}`,
-          };
-        }
-
-        // Если это объект, но с другой структурой
-        return {
-          slug:
-            item.slug ||
-            item.name?.toLowerCase().replace(/\s+/g, "-") ||
-            String(item),
-          name: item.name || String(item).replace(/-/g, " "),
-          url:
-            item.url ||
-            `https://dummyjson.com/products/category/${
-              item.slug || item.name || item
-            }`,
-        };
-      });
+      return rawCategories.map((categoryName: string) => ({
+        slug: categoryName.toLowerCase().replace(/\s+/g, "-"),
+        name: categoryName.charAt(0).toUpperCase() + categoryName.slice(1).replace(/-/g, " "),
+        url: `https://dummyjson.com/products/category/${categoryName}`,
+      }));
     }
 
+    // Если API вернул не массив
+    console.error("API returned unexpected format for categories:", rawCategories);
     return [];
   } catch (error) {
     console.error("Failed to fetch categories:", error);
@@ -83,7 +64,7 @@ async function getCategories(): Promise<Category[]> {
 }
 
 // Функция для получения количества продуктов по категориям
-async function getCategoryCounts(categories: Category[]) {
+async function getCategoryCounts(categories: Category[]): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
 
   try {
@@ -94,13 +75,12 @@ async function getCategoryCounts(categories: Category[]) {
           category.slug,
           { limit: 1, skip: 0 }
         );
-        return { slug: category.slug, count: response.total || 0 };
+        return { slug: category.slug, count: response.total || 0 } as CategoryCountResult;
       } catch (error) {
         console.error(
-          `Failed to fetch count for category ${category.slug}:`,
-          error
+          `Failed to fetch count for category ${category.slug}:`, error
         );
-        return { slug: category.slug, count: 0 };
+        return { slug: category.slug, count: 0 } as CategoryCountResult;
       }
     });
 
